@@ -1,0 +1,143 @@
+---
+title: "ISYE 6414 Project Modelling"
+output: html_notebook
+---
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(stats)
+library(car)
+```
+
+
+```{r}
+data = read.csv("Life-Expectancy-Data-Updated.csv")
+data_filtered  = data[, c("BMI", "GDP_per_capita", "Schooling", "Region", "Economy_status_Developed", "Life_expectancy","Infant_deaths","Adult_mortality")]
+head(data_filtered)
+```
+We have read the data and only considered the follwing columns - "BMI", "GDP_per_capita", "Schooling", "Region", "Economy_status_Developed","Life_expectancy","Infant_deaths","Adult_mortality", This is in order to simplify the analysis -(we have removed variables which have low correlation with the target variable and those which have correlated with other predictor variables)
+```{r}
+data_filtered$Region <- factor(data_filtered$Region)
+```
+
+```{r}
+set.seed(123)  # Set seed for reproducibility
+total_rows <- nrow(data_filtered)
+test_percentage <- 10
+test_size <- round((test_percentage / 100) * total_rows)
+test_indices <- sample(1:total_rows, test_size)
+test_data <- data_filtered[test_indices, ]
+train_data <- data_filtered[-test_indices, ]
+```
+Taking 90:10 split of Training and Validation data sets
+
+```{r}
+min <- lm(Life_expectancy ~ 1, train_data)
+full <- lm(Life_expectancy ~ ., train_data)
+model=step(min, scope = list(lower = min, upper =
+full),direction = "forward")
+summary(model)
+```
+Forwards Stepwise regression gives the following predictor variables - "BMI", "GDP_per_capita", "Schooling", "Region", "Economy_status_Developed", "Infant_deaths","Adult_mortality"
+```{r}
+model=step(full,scope = list(lower = min, upper = full),
+direction = "backward")
+summary(model)
+```
+Backward Stepwise regression also gives us the same predictor variables
+```{r}
+model_final = lm(formula = Life_expectancy ~ BMI + GDP_per_capita + Schooling + 
+    Region + Economy_status_Developed + Infant_deaths + Adult_mortality, data = train_data)
+summary(model_final)
+```
+All the predictor values are significant with a pvalue threshold of 0.01, however Regions in Rest of Europe and Middle East are not significant predictors since their pvalue >0.01
+```{r}
+residual <- residuals(model_final)
+mean(residual)
+```
+Mean of residuals are very close to zero, which is concurrent with the assumptions
+```{r}
+plot(fitted(model_final), resid(model_final), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "blue")
+```
+The Residuals vs fitted plot does not have any patterns confirming linearity and the variance also does not change significantly as we move along the x-axis, thus confirming constant variance assumption.
+```{r}
+hist(residual, main = "Histogram", xlab = "Residuals")
+
+```
+```{r}
+qqPlot(residual, main = "Normality Plot (Residuals)")
+```
+The Histogram is approximately symmetrical with one peak and no gaps in between confirming normality, also the QQ plot follows the 45 degree line as well which strengthens the assumption of normality.
+```{r}
+cooksd <- cooks.distance(model_final)
+
+threshold <- 4/length(cooksd)
+
+# Identify outliers based on the threshold
+outliers <- which(cooksd > threshold)
+
+# Plot Cook's distance values against observation numbers
+plot(cooksd, pch = 19, main = "Cook's Distance Plot", ylab = "Cook's Distance", xlab = "Observation Number")
+
+# Highlight outliers with a different color
+points(outliers, cooksd[outliers], pch = 19, col = "red")
+
+```
+
+```{r}
+
+# Print the list of outlier indices
+cat("Outlier Indices:", outliers, "\n")
+cat("Number of Outliers:", length(outliers))
+```
+There are 147 outliers from the Cooks Distance Plot using a threshold of 4/n
+```{r}
+outlier_table = train_data[outliers,]
+table(outlier_table$Region)
+```
+```{r}
+train_data$IsOutlier <- ifelse(1:nrow(train_data) %in% outliers, "Outlier", "Non-Outlier")
+
+# Calculate the mean of GDP_per_capita for outliers and non-outliers
+mean_gdp_outliers <- mean(train_data$GDP_per_capita[train_data$IsOutlier == "Outlier"], na.rm = TRUE)
+mean_gdp_non_outliers <- mean(train_data$GDP_per_capita[train_data$IsOutlier == "Non-Outlier"], na.rm = TRUE)
+
+# Print the results
+cat("Mean GDP_per_capita for Outliers:", mean_gdp_outliers, "\n")
+cat("Mean GDP_per_capita for Non-Outliers:", mean_gdp_non_outliers, "\n")
+```
+
+however these datapoints do not highly deviate from the data and might be influential data points to the analysis. We can see that most of these datapoints are from African regions where the life expectancy is generally lower than other regions, also looking at the GDP we can see that the Mean GDP_per_capita is much higher for Non-Outliers compared to outliers, thus we can understand that outliers are capturing the life expectancy of underdeveloped countires and if we remove them, this may lead to a bias in the result. Thus we do not remove outliers.
+```{r}
+print("VIF:")
+vif(model_final)
+cat("VIF threshold is :", max(10,1/(1-summary(model_final)$r.squared)))
+```
+Since VIF < VIF threshold = max(10,1/(1-R^2)) = 55.47 - no multicollinearity exists
+
+```{r}
+predictions_train <- predict(model_final, newdata = train_data)
+
+# Evaluate model performance
+mse <- mean((train_data$Life_expectancy - predictions_train)^2)
+r_squared <- cor(train_data$Life_expectancy, predictions_train)^2
+
+# Print evaluation metrics
+cat("Mean Squared Error (MSE) Training:", mse, "\n")
+cat("R-squared Training:", r_squared, "\n")
+
+predictions_test <- predict(model_final, newdata = test_data)
+
+# Evaluate model performance
+mse <- mean((test_data$Life_expectancy - predictions_test)^2)
+r_squared <- cor(test_data$Life_expectancy, predictions_test)^2
+
+# Print evaluation metrics
+cat("Mean Squared Error (MSE) Testing:", mse, "\n")
+cat("R-squared Testing:", r_squared, "\n")
+```
+The model is performing well on the test dataset as well with low Testing MSE and high R^2
+

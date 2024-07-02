@@ -1,0 +1,91 @@
+---
+title: "ISYE6414 Project - Time Series EDA"
+output: html_notebook
+---
+
+```{r}
+data = read.csv("../Data/Life-Expectancy-Data-Updated.csv")
+data$Region <- as.factor(data$Region)
+data$Country <- as.factor(data$Country)
+unique(data$Region)
+```
+
+```{r}
+region = "Middle East"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+```{r}
+region = "Asia"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "Central America and Caribbean"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "Africa"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "North America"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "European Union"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "South America"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "Rest of Europe"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
+
+```{r}
+region = "Oceania"
+data2 <- data[data$Region == region,]
+data2
+plot(data2$Year, data2$Life_expectancy, col=data2$Country,
+     xlab="Year", ylab="Life expectancy", 
+     main=paste("Life expectancy time trend for region:", region))
+```
