@@ -1,0 +1,1 @@
+This repo contains the submission for our group project for ISYE6414: Regression Analysis, in which we used regression techniques to quantify the impact of various factors on lifespan. 
